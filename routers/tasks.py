@@ -105,7 +105,7 @@ def update_task(task_id: int, updated_task: Task, db: Session = Depends(get_db))
     raise HTTPException(
             status_code=404, 
             detail="Task not found"
-        )      #day 5 task 3
+        )     # day 5 task 3
     
 
 @router.delete("/tasks/{task_id}")         # day 5 task 2
