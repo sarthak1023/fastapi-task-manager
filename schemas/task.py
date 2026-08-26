@@ -13,6 +13,7 @@ class Task(BaseModel):
 class TaskResponse(BaseModel):     # task1 day 4
     id: int
     title: str
+    description: Optional[str] = None
     completed: bool 
 
 class CreateTaskresponse(BaseModel):               #entered because of 500 error in post end point

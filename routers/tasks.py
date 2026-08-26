@@ -6,16 +6,17 @@ from database import get_db
 from services.auth import get_current_user # to protect endpoints with jwt authentication
 from models.user import User
 from models.task import Task as TaskModel
+from typing import Optional
 
 print(TaskModel)                # getting error in the terminal that TaskModel is not defined, so we are printing it to check if it is imported correctly
 print(TaskModel.__module__)     # to check the module where TaskModel is defined
 print(hasattr(TaskModel, "user_id"))
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/tasks",
+    tags=["Tasks"]
+)
 
-@router.get("/")
-def home():
-    return {"message": "Welome!"}
 
 @router.get("/about")
 def about():
@@ -49,19 +50,28 @@ def get_student(student_id: int, db: Session =Depends(get_db)):
 
 @router.get("/tasks")
 def get_tasks(
+    completed: Optional[bool] = None,   # from ?completed=true or ?completed=false, or nothing
+    skip: int = 0,                       # from ?skip=10, defaults to 0 if not given
+    limit: int = 10,                     # from ?limit=5, defaults to 10 if not given
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    print(TaskModel)
-    print(hasattr(TaskModel, "user_id"))
-    tasks = db.query(TaskModel).filter(
+    # Start with: "all tasks belonging to this logged-in user"
+    query = db.query(TaskModel).filter(
         TaskModel.user_id == current_user.id
-    ).all()
+    )
+
+    # If the frontend specifically asked to filter by completed status, narrow it further
+    if completed is not None:
+        query = query.filter(TaskModel.completed == completed)
+
+    # Apply pagination: skip some, then take only up to `limit` results
+    tasks = query.offset(skip).limit(limit).all()
 
     return tasks
 
 # Task 3  day 3
-@router.get("/tasks/{task_id}")
+@router.get("/{task_id}")
 def get_task(task_id: int, db: Session = Depends(get_db)):
     task = db.query(TaskModel).filter(TaskModel.id == task_id).first()
     if task:
@@ -70,7 +80,7 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
     raise HTTPException(status_code=404, detail="Task not found")
 
 
-@router.post("/task",response_model=CreateTaskresponse, status_code=status.HTTP_201_CREATED)
+@router.post("/",response_model=CreateTaskresponse, status_code=status.HTTP_201_CREATED)
 def create_task(task: Task, db: Session = Depends(get_db),
                 current_user: User = Depends(get_current_user)):
     db_task = TaskModel(
@@ -87,10 +97,10 @@ def create_task(task: Task, db: Session = Depends(get_db),
         "message": "Task created successfully",
         "task": db_task
     }
-@router.put("/tasks/{task_id}")                  # day 5 task 1
+@router.put("/{task_id}")                  # day 5 task 1
 
-def update_task(task_id: int, updated_task: Task, db: Session = Depends(get_db)):
-    task = db.query(TaskModel).filter(TaskModel.id == task_id).first()
+def update_task(task_id: int, updated_task: Task, db: Session = Depends(get_db),current_user = Depends(get_current_user)):
+    task = db.query(TaskModel).filter(TaskModel.id == task_id, TaskModel.user_id == current_user.id).first()
     if task:
         task.title = updated_task.title
         task.description = updated_task.description
@@ -108,9 +118,9 @@ def update_task(task_id: int, updated_task: Task, db: Session = Depends(get_db))
         )     # day 5 task 3
     
 
-@router.delete("/tasks/{task_id}")         # day 5 task 2
-def delete_task(task_id: int, db: Session = Depends(get_db)):
-    task = db.query(TaskModel).filter(TaskModel.id == task_id).first()
+@router.delete("/{task_id}")         # day 5 task 2
+def delete_task(task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    task = db.query(TaskModel).filter(TaskModel.id == task_id, TaskModel.user_id == current_user.id).first()
     if task:
         db.delete(task)
         db.commit()
@@ -122,8 +132,3 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
         detail="Task not found"
         )    
 
-@router.get("/test_error")
-def test_error():
-     x = 10 / 0
-     return x
-    
