@@ -111,7 +111,7 @@ pip install -r requirements.txt
 Create a file named `.env` in the project root.
 
 ```env
-SECRET_KEY=your_secret_key_here
+SECRET_KEY=
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
