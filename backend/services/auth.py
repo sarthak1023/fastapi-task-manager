@@ -1,10 +1,11 @@
 import token 
+from pathlib import Path
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from database import get_db
-from models.user import User
+from backend.database import get_db
+from backend.models.user import User
 
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -13,7 +14,7 @@ from dotenv import load_dotenv
 from datetime import UTC, datetime, timedelta
 import os
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")

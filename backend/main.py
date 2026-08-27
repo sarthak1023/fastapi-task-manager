@@ -2,24 +2,27 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
+from pathlib import Path
 
-from core.exception_handler import global_exception_handler
+from backend.core.exception_handler import global_exception_handler
 
-from database import engine, Base
-from models.task import Task
-from models.user import User   # important for creating user table in database
+from backend.database import engine, Base
+from backend.models.task import Task
+from backend.models.user import User   # important for creating user table in database
 
-from routers.tasks import router as task_router
-from routers.user import router as user_router   # for hashing password
+from backend.routers.tasks import router as task_router
+from backend.routers.user import router as user_router   # for hashing password
 from fastapi.middleware.cors import CORSMiddleware
+
+BASE_DIR = Path(__file__).resolve().parent
 
 # Create all database tables
 Base.metadata.create_all(bind=engine)
 
-from core.logging_config import logger
+from backend.core.logging_config import logger
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 app.add_exception_handler(
     Exception, global_exception_handler

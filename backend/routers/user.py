@@ -1,15 +1,15 @@
 from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
-from services.auth import (create_access_token, verify_password, hash_password)
-from services.email_services import generate_verification_code, send_verification_email
+from backend.services.auth import (create_access_token, verify_password, hash_password)
+from backend.services.email_services import generate_verification_code, send_verification_email
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
-from database import get_db
-from models.user import User
-from schemas.user import UserCreate, UserResponse
+from backend.database import get_db
+from backend.models.user import User
+from backend.schemas.user import UserCreate, UserResponse
 
 router = APIRouter()
 

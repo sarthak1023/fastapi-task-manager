@@ -1,16 +1,11 @@
-from models.task import Task as TaskModel
+from backend.models.task import Task as TaskModel
 from fastapi import Depends , APIRouter , HTTPException, status
-from schemas.task import Task, CreateTaskresponse
+from backend.schemas.task import Task, CreateTaskresponse
 from sqlalchemy.orm import Session
-from database import get_db
-from services.auth import get_current_user # to protect endpoints with jwt authentication
-from models.user import User
-from models.task import Task as TaskModel
+from backend.database import get_db
+from backend.services.auth import get_current_user # to protect endpoints with jwt authentication
+from backend.models.user import User
 from typing import Optional
-
-print(TaskModel)                # getting error in the terminal that TaskModel is not defined, so we are printing it to check if it is imported correctly
-print(TaskModel.__module__)     # to check the module where TaskModel is defined
-print(hasattr(TaskModel, "user_id"))
 
 router = APIRouter(
     prefix="/tasks",
