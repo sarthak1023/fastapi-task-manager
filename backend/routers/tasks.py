@@ -1,10 +1,10 @@
-from backend.models.task import Task as TaskModel
+from models.task import Task as TaskModel
 from fastapi import Depends , APIRouter , HTTPException, status
-from backend.schemas.task import Task, CreateTaskresponse
+from schemas.task import Task, CreateTaskresponse
 from sqlalchemy.orm import Session
-from backend.database import get_db
-from backend.services.auth import get_current_user # to protect endpoints with jwt authentication
-from backend.models.user import User
+from database import get_db
+from services.auth import get_current_user # to protect endpoints with jwt authentication
+from models.user import User
 from typing import Optional
 
 router = APIRouter(

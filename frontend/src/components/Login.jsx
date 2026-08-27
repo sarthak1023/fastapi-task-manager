@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import { Link } from "react-router-dom";
 import Tilt from "react-parallax-tilt";
-import { LogIn } from "lucide-react";
+import { CheckSquare } from "lucide-react";
 
 function Login() {
     const navigate = useNavigate();
@@ -58,7 +58,6 @@ function Login() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-indigo-50 relative overflow-hidden">
 
-            {/* Floating background shapes for depth */}
             <div className="absolute top-10 left-10 w-40 h-40 bg-indigo-200 rounded-full blur-3xl opacity-40"></div>
             <div className="absolute bottom-10 right-10 w-56 h-56 bg-purple-200 rounded-full blur-3xl opacity-40"></div>
 
@@ -73,15 +72,25 @@ function Login() {
                 className="relative z-10"
             >
                 <div className="w-full max-w-sm bg-white p-8 rounded-2xl shadow-2xl">
-                    <div className="flex justify-center mb-4">
-                        <div className="bg-indigo-100 p-3 rounded-full">
-                            <LogIn className="text-indigo-600" size={24} />
+
+                    {/* Branding */}
+                    <div className="flex flex-col items-center mb-6">
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="bg-indigo-600 p-1.5 rounded-lg">
+                                <CheckSquare className="text-white" size={20} />
+                            </div>
+                            <span className="text-lg font-bold text-gray-800">TaskMaster</span>
                         </div>
+                        <p className="text-xs text-gray-400">A better to-do</p>
                     </div>
 
-                    <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-                        Login
+                    <p className="text-sm text-gray-500 text-center mb-1">Welcome back</p>
+                    <h2 className="text-xl font-bold text-gray-800 mb-1 text-center">
+                        Log in to your to-do list
                     </h2>
+                    <p className="text-xs text-gray-400 text-center mb-6">
+                        Organize your life, one check at a time.
+                    </p>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -98,12 +107,12 @@ function Login() {
                         )}
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="Enter your email"
+                                placeholder="e.g., yourname@email.com"
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
@@ -114,7 +123,7 @@ function Login() {
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Enter your password"
+                                placeholder="e.g., your password"
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
@@ -124,14 +133,19 @@ function Login() {
                             disabled={isSubmitting}
                             className="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700 disabled:bg-indigo-300 transition shadow-lg shadow-indigo-200"
                         >
-                            {isSubmitting ? "Logging in..." : "Login"}
+                            {isSubmitting ? "Logging in..." : "Log in with TaskMaster"}
                         </button>
 
                     </form>
 
-                    <p className="text-sm text-gray-600 mt-4 text-center">
-                        Don't have an account? <Link to="/signup" className="text-indigo-600 hover:underline">Sign up</Link>
-                    </p>
+               <div className="text-center text-sm mt-6 pt-4 border-t border-gray-100">
+    <p className="text-gray-500">
+        No account?{" "}
+        <Link to="/signup" className="text-indigo-600 hover:text-indigo-800 font-medium hover:underline">
+            Sign up
+        </Link>
+    </p>
+</div>
                 </div>
             </Tilt>
         </div>

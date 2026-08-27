@@ -37,30 +37,33 @@ A Task Management REST API built using **FastAPI**, **SQLAlchemy**, **SQLite**, 
 ```
 Fast API/
 │
-├── core/
-│   ├── exception_handler.py
-│   └── logging_config.py
+├── backend/
+│   ├── core/
+│   │   ├── exception_handler.py
+│   │   └── logging_config.py
+│   ├── models/
+│   │   ├── task.py
+│   │   └── user.py
+│   ├── routers/
+│   │   ├── tasks.py
+│   │   └── user.py
+│   ├── schemas/
+│   │   ├── task.py
+│   │   └── user.py
+│   ├── services/
+│   │   ├── auth.py
+│   │   └── email_services.py
+│   ├── static/
+│   ├── templates/
+│   ├── database.py
+│   ├── main.py
+│   ├── requirements.txt
+│   ├── .env
+│   ├── .env.example
+│   └── tasks.db
 │
-├── models/
-│   ├── task.py
-│   └── user.py
-│
-├── routers/
-│   ├── tasks.py
-│   └── user.py
-│
-├── schemas/
-│   ├── task.py
-│   └── user.py
-│
-├── services/
-│   └── auth.py
-│
-├── database.py
-├── main.py
-├── requirements.txt
+├── frontend/
 ├── README.md
-├── .env.example
 └── .gitignore
 ```
 
@@ -101,14 +104,14 @@ source venv/bin/activate
 ## 3. Install Dependencies
 
 ```bash
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 ```
 
 ---
 
 ## 4. Create a .env File
 
-Create a file named `.env` in the project root.
+Create a file named `backend/.env`.
 
 ```env
 SECRET_KEY=
@@ -121,7 +124,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 ## 5. Run the Application
 
 ```bash
-python -m uvicorn main:app --reload
+python -m uvicorn backend.main:app --reload
 ```
 
 The API will be available at:

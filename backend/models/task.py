@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from datetime import datetime, UTC
 
-from backend.database import Base
+from database import Base
 
 class Task(Base):
     __tablename__ = "tasks"

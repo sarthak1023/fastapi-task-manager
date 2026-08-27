@@ -4,8 +4,8 @@ from pathlib import Path
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from backend.database import get_db
-from backend.models.user import User
+from database import get_db
+from models.user import User
 
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError

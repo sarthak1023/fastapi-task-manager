@@ -12,6 +12,8 @@ function Verify() {
     const [code, setCode] = useState("");
     const [error, setError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isResending, setIsResending] = useState(false);
+    const [resendMessage, setResendMessage] = useState("");
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -32,6 +34,34 @@ function Verify() {
             }
         } finally {
             setIsSubmitting(false);
+        }
+    }
+
+    async function handleResend() {
+        setError("");
+        setResendMessage("");
+
+        if (!email.trim()) {
+            setError("Enter your email first.");
+            return;
+        }
+
+        setIsResending(true);
+
+        try {
+            await api.post("/resend-code", { email });
+            setResendMessage("A new code has been sent to your email.");
+
+        } catch (error) {
+            console.error("Resend failed:", error);
+
+            if (error.response && error.response.data && error.response.data.detail) {
+                setError(error.response.data.detail);
+            } else {
+                setError("Could not resend code. Please try again.");
+            }
+        } finally {
+            setIsResending(false);
         }
     }
 
@@ -66,6 +96,12 @@ function Verify() {
                     </p>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
+
+                        {resendMessage && (
+                            <p className="text-green-600 text-sm bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                                {resendMessage}
+                            </p>
+                        )}
 
                         {error && (
                             <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
@@ -104,6 +140,14 @@ function Verify() {
                         </button>
 
                     </form>
+
+                    <button
+                        onClick={handleResend}
+                        disabled={isResending}
+                        className="w-full text-sm text-indigo-600 hover:text-indigo-800 hover:underline mt-4 disabled:text-gray-400 disabled:no-underline"
+                    >
+                        {isResending ? "Resending..." : "Didn't get a code? Resend"}
+                    </button>
 
                     <p className="text-sm text-gray-600 mt-4 text-center">
                         Already verified? <Link to="/login" className="text-indigo-600 hover:underline">Login</Link>
