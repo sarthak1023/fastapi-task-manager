@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import api from "../api/axios";
 import Tilt from "react-parallax-tilt";
-import { MailCheck } from "lucide-react";
+import { CheckSquare } from "lucide-react";
 
 function Verify() {
     const navigate = useNavigate();
@@ -66,10 +66,10 @@ function Verify() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-indigo-50 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-white relative overflow-hidden">
 
-            <div className="absolute top-10 left-10 w-40 h-40 bg-indigo-200 rounded-full blur-3xl opacity-40"></div>
-            <div className="absolute bottom-10 right-10 w-56 h-56 bg-purple-200 rounded-full blur-3xl opacity-40"></div>
+            <div className="absolute top-10 left-10 w-40 h-40 bg-slate-100 rounded-full blur-3xl opacity-5"></div>
+            <div className="absolute bottom-10 right-10 w-56 h-56 bg-slate-100 rounded-full blur-3xl opacity-5"></div>
 
             <Tilt
                 tiltMaxAngleX={6}
@@ -82,10 +82,14 @@ function Verify() {
                 className="relative z-10"
             >
                 <div className="w-full max-w-sm bg-white p-8 rounded-2xl shadow-2xl">
-                    <div className="flex justify-center mb-4">
-                        <div className="bg-indigo-100 p-3 rounded-full">
-                            <MailCheck className="text-indigo-600" size={24} />
+                    <div className="flex flex-col items-center mb-8">
+                        <div className="flex items-center gap-2 mb-3">
+                            <div className="bg-indigo-600 p-2 rounded-lg">
+                                <CheckSquare className="text-white" size={20} />
+                            </div>
+                            <span className="text-xl font-bold text-gray-800">TaskMaster</span>
                         </div>
+                        <p className="text-xs text-gray-400 font-medium">Stay organized, stay focused</p>
                     </div>
 
                     <h2 className="text-2xl font-bold text-gray-800 mb-2 text-center">

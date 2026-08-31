@@ -1,1 +1,64 @@
 @import "tailwindcss";
+
+@keyframes rain-fall {
+	0% {
+		transform: translate3d(0, -12vh, 0) rotate(14deg);
+	}
+	100% {
+		transform: translate3d(-12vw, 120vh, 0) rotate(14deg);
+	}
+}
+
+.rain-drop {
+	animation-name: rain-fall;
+	animation-iteration-count: infinite;
+	animation-timing-function: linear;
+	will-change: transform;
+}
+
+@keyframes auth-float {
+	0%, 100% {
+		transform: rotateX(1deg) rotateY(-1deg) translateY(0);
+	}
+	50% {
+		transform: rotateX(2deg) rotateY(1deg) translateY(-6px);
+	}
+}
+
+.auth-panel {
+	perspective: 1600px;
+	transform-style: preserve-3d;
+}
+
+.auth-panel > div {
+	position: relative;
+	margin: 14px;
+	transform: rotateX(1deg) rotateY(-1deg);
+	transform-style: preserve-3d;
+	animation: auth-float 7s ease-in-out infinite;
+	box-shadow: 0 30px 0 -18px rgba(8, 47, 73, 0.2), 0 38px 90px rgba(2, 8, 23, 0.38);
+	transition: transform 500ms ease, box-shadow 500ms ease;
+}
+
+.auth-panel > div::before {
+	position: absolute;
+	z-index: -1;
+	inset: 12px -14px -14px 12px;
+	border: 1px solid rgba(103, 232, 249, 0.18);
+	border-radius: 2rem;
+	background: linear-gradient(135deg, rgba(34, 211, 238, 0.14), rgba(79, 70, 229, 0.08));
+	content: "";
+	transform: translateZ(-28px);
+}
+
+.auth-panel:hover > div {
+	transform: rotateX(0deg) rotateY(0deg) translateY(-4px);
+	box-shadow: 0 34px 0 -18px rgba(8, 47, 73, 0.22), 0 44px 100px rgba(2, 8, 23, 0.44);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.auth-panel > div {
+		animation: none;
+		transition: none;
+	}
+}

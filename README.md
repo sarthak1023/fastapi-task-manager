@@ -1,185 +1,159 @@
 # FastAPI Task Management API
 
-A Task Management REST API built using **FastAPI**, **SQLAlchemy**, **SQLite**, and **JWT Authentication**. The API allows users to register, log in, and manage their own tasks securely.
-
----
+A task management application with a FastAPI and SQLite backend and a React frontend. Users can register, verify their email, log in with JWT authentication, and manage their own tasks.
 
 ## Features
 
-- User Registration
-- User Login with JWT Authentication
-- Password Hashing using bcrypt
-- Create, Read, Update and Delete Tasks
-- User-specific Task Access
-- Protected Endpoints
-- Global Exception Handling
-- Request Logging
-- Interactive Swagger Documentation
-
----
+- User registration and email verification
+- Resending verification codes
+- JWT-based login and protected task operations
+- Password hashing with bcrypt
+- Create, read, update, and delete tasks
+- Per-user task access
+- Request logging and global exception handling
+- Swagger API documentation
 
 ## Tech Stack
 
-- Python 3
-- FastAPI
-- Uvicorn
-- SQLAlchemy
-- SQLite
-- Pydantic
-- Passlib (bcrypt)
-- Python-JOSE (JWT)
-- Python-dotenv
+- Backend: Python, FastAPI, SQLAlchemy, SQLite, Pydantic
+- Authentication: Passlib, Python-JOSE, JWT
+- Email: Gmail SMTP
+- Frontend: React, Vite, Axios, React Router
 
----
+## Project Structure
 
-# Project Structure
-
-```
-Fast API/
-│
+```text
+Fast api/
 ├── backend/
 │   ├── core/
-│   │   ├── exception_handler.py
-│   │   └── logging_config.py
 │   ├── models/
-│   │   ├── task.py
-│   │   └── user.py
 │   ├── routers/
-│   │   ├── tasks.py
-│   │   └── user.py
 │   ├── schemas/
-│   │   ├── task.py
-│   │   └── user.py
 │   ├── services/
-│   │   ├── auth.py
-│   │   └── email_services.py
 │   ├── static/
 │   ├── templates/
 │   ├── database.py
 │   ├── main.py
 │   ├── requirements.txt
-│   ├── .env
-│   ├── .env.example
-│   └── tasks.db
-│
+│   └── .env.example
 ├── frontend/
+│   ├── src/
+│   ├── package.json
+│   └── vite.config.js
+├── tasks.db
 ├── README.md
 └── .gitignore
 ```
 
----
+The SQLite database is kept at the repository root as `tasks.db`. The real `backend/.env` file is ignored by Git and must be created locally.
 
-# Installation
+## Backend Setup
 
-## 1. Clone the Repository
+From the repository root, create and activate the virtual environment:
 
-```bash
-git clone https://github.com/your-username/fastapi-task-management.git
+### Windows PowerShell
 
-cd fastapi-task-management
-```
-
----
-
-## 2. Create a Virtual Environment
-
-### Windows
-
-```bash
+```powershell
 python -m venv venv
-
-venv\Scripts\activate
+.\venv\Scripts\Activate.ps1
+pip install -r backend\requirements.txt
+Copy-Item backend\.env.example backend\.env
 ```
 
-### Linux / macOS
-
-```bash
-python3 -m venv venv
-
-source venv/bin/activate
-```
-
----
-
-## 3. Install Dependencies
-
-```bash
-pip install -r backend/requirements.txt
-```
-
----
-
-## 4. Create a .env File
-
-Create a file named `backend/.env`.
+Edit `backend/.env` with your own values:
 
 ```env
-SECRET_KEY=
+SECRET_KEY=your_secret_key_here
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+GMAIL_ADDRESS=your-gmail-address
+GMAIL_APP_PASSWORD=your-gmail-app-password
 ```
 
----
+`GMAIL_ADDRESS` and `GMAIL_APP_PASSWORD` are required when signup sends a verification email. Use a Gmail app password, not your normal Gmail password.
 
-## 5. Run the Application
+Start the backend from the `backend` directory:
 
-```bash
-python -m uvicorn backend.main:app --reload
+```powershell
+cd backend
+python -m uvicorn main:app --reload
 ```
 
-The API will be available at:
+The backend is available at:
 
+- API: http://127.0.0.1:8000
+- Swagger UI: http://127.0.0.1:8000/docs
+- Root HTML page: http://127.0.0.1:8000/
+
+Stop the server with `Ctrl+C` in the same terminal where Uvicorn is running. Do not start a second server on port `8000` while one is already running.
+
+## Frontend Setup
+
+Open a second terminal from the repository root:
+
+```powershell
+cd frontend
+npm install
+npm run dev
 ```
-http://127.0.0.1:8000
+
+The frontend normally runs at http://localhost:5173 and calls the backend at `http://127.0.0.1:8000`.
+
+Available frontend commands:
+
+```powershell
+npm run dev
+npm run build
+npm run lint
+npm run preview
 ```
 
-Swagger UI:
+## API Endpoints
 
-```
-http://127.0.0.1:8000/docs
-```
-
----
-
-# Authentication
-
-1. Register a user using `/signup`
-2. Login using `/login`
-3. Copy the JWT Access Token
-4. Click **Authorize** in Swagger UI
-5. Paste the token
-6. Access protected endpoints
-
----
-
-# API Endpoints
-
-## Authentication
+### Authentication
 
 | Method | Endpoint | Description |
-|---------|----------|-------------|
-| POST | `/signup` | Register a new user |
-| POST | `/login` | Login and receive JWT token |
+|---|---|---|
+| `POST` | `/signup` | Create an unverified user and send a verification code |
+| `POST` | `/verify` | Verify an email address with its code |
+| `POST` | `/resend-code` | Send a new verification code |
+| `POST` | `/login` | Log in and receive a JWT access token |
+| `DELETE` | `/users/{email}` | Delete a user |
 
----
+Login expects URL-encoded form data:
 
-## Tasks
+```text
+username=user@example.com
+password=password123
+```
 
-| Method | Endpoint | Description | Authentication |
-|---------|----------|-------------|----------------|
-| GET | `/tasks` | Get all tasks of logged-in user | Required |
-| GET | `/tasks/{task_id}` | Get task by ID | Required |
-| POST | `/task` | Create a new task | Required |
-| PUT | `/tasks/{task_id}` | Update a task | Required |
-| DELETE | `/tasks/{task_id}` | Delete a task | Required |
+Users must verify their email before logging in.
 
----
+### Tasks
 
-# Request Examples
+The task router uses the `/tasks` prefix.
 
-## Signup
+| Method | Endpoint | Authentication |
+|---|---|---|
+| `GET` | `/tasks/about` | None |
+| `GET` | `/tasks/employee` | None |
+| `GET` | `/tasks/skills` | None |
+| `GET` | `/tasks/student/{student_id}` | None |
+| `GET` | `/tasks/tasks` | Bearer token |
+| `GET` | `/tasks/{task_id}` | None |
+| `POST` | `/tasks/` | Bearer token |
+| `PUT` | `/tasks/{task_id}` | Bearer token |
+| `DELETE` | `/tasks/{task_id}` | Bearer token |
 
-**POST** `/signup`
+The authenticated list endpoint supports optional pagination and filtering:
+
+```text
+/tasks/tasks?completed=false&skip=0&limit=10
+```
+
+## Request Examples
+
+### Signup
 
 ```json
 {
@@ -188,109 +162,41 @@ http://127.0.0.1:8000/docs
 }
 ```
 
----
-
-## Login
-
-**POST** `/login`
-
-Use **form-data**
-
-```
-username=user@example.com
-password=password123
-```
-
-Response:
+### Verify
 
 ```json
 {
-  "access_token": "<JWT_TOKEN>",
-  "token_type": "bearer"
+  "email": "user@example.com",
+  "code": "123456"
 }
 ```
 
----
-
-## Create Task
-
-**POST** `/task`
+### Create or Update a Task
 
 ```json
 {
   "title": "Learn FastAPI",
-  "description": "Complete Day 14",
+  "description": "Complete the task management API",
   "completed": false
 }
 ```
 
----
+Task titles must contain between 3 and 100 characters.
 
-## Update Task
+## Error Responses
 
-**PUT** `/tasks/{task_id}`
-
-```json
-{
-  "title": "Learn FastAPI Updated",
-  "description": "Completed",
-  "completed": true
-}
-```
-
----
-
-# Error Responses
-
-Example:
+Validation and endpoint errors normally use this format:
 
 ```json
 {
-    "detail": "Task not found"
+  "detail": "Task not found"
 }
 ```
 
-or
+Unhandled server errors use:
 
 ```json
 {
-    "detail": "Internal Server Error"
+  "details": "Internal Server Error"
 }
 ```
-
----
-
-# Security
-
-- Passwords are hashed using bcrypt.
-- JWT Authentication protects all task endpoints.
-- Each user can only access their own tasks.
-- Secret keys are stored using environment variables.
-
----
-
-# Testing
-
-The API was tested using Swagger UI.
-
-Tested scenarios include:
-
-- User Registration
-- User Login
-- JWT Authentication
-- Create Task
-- Get Tasks
-- Update Task
-- Delete Task
-- Unauthorized Requests
-- Invalid Credentials
-- User-specific Task Access
-- Global Exception Handling
-
----
-
-# Author
-
-**Sarthak Singh**
-
-Backend Developer | FastAPI Learner
