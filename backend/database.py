@@ -1,13 +1,18 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from pathlib import Path
+import os
+from dotenv import load_dotenv
 
-DATABASE_PATH = Path(__file__).resolve().parent.parent / "tasks.db"
-DATABASE_URL = f"sqlite:///{DATABASE_PATH.as_posix()}"
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./tasks.db")
+
+# SQLite needs this special connect_args; Postgres does not
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False}
+    connect_args=connect_args
 )
 
 SessionLocal = sessionmaker(
@@ -20,8 +25,7 @@ Base = declarative_base()
 
 def get_db():
     db = SessionLocal()
-
     try:
         yield db
     finally:
-        db.close()    
+        db.close()
