@@ -1,14 +1,11 @@
-import smtplib
 import random
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import resend
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
-GMAIL_ADDRESS = os.getenv("GMAIL_ADDRESS")
-GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
+resend.api_key = os.getenv("RESEND_API_KEY")
 
 
 def generate_verification_code():
@@ -16,13 +13,6 @@ def generate_verification_code():
 
 
 def send_verification_email(to_email: str, code: str):
-    msg = MIMEMultipart("alternative")
-    msg["From"] = f"TaskMaster <{GMAIL_ADDRESS}>"
-    msg["To"] = to_email
-    msg["Subject"] = "Verify your email - TaskMaster"
-
-    text_body = f"Your verification code is: {code}\n\nThis code will expire in 10 minutes. Enter it in the app to verify your account."
-
     html_body = f"""
     <html>
       <body style="margin:0; padding:0; background-color:#f3f4f6; font-family:Arial, sans-serif;">
@@ -74,10 +64,9 @@ def send_verification_email(to_email: str, code: str):
     </html>
     """
 
-    msg.attach(MIMEText(text_body, "plain"))
-    msg.attach(MIMEText(html_body, "html"))
-
-    with smtplib.SMTP("smtp.gmail.com", 587) as server:
-        server.starttls()
-        server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
-        server.send_message(msg)
+    resend.Emails.send({
+        "from": "TaskMaster <onboarding@resend.dev>",
+        "to": [to_email],
+        "subject": "Verify your email - TaskMaster",
+        "html": html_body,
+    })
