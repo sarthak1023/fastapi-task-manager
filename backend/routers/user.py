@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from database import get_db
 from models.user import User
 from schemas.user import UserCreate, UserResponse
+from models.task import Task as TaskModel
 
 router = APIRouter()
 
@@ -110,6 +111,9 @@ def delete_user(email: str, db: Session = Depends(get_db)):
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    # Delete this user's tasks first, to avoid a foreign key conflict in Postgres
+    db.query(TaskModel).filter(TaskModel.user_id == user.id).delete()
 
     db.delete(user)
     db.commit()
