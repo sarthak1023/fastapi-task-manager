@@ -32,7 +32,10 @@ app.add_exception_handler(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Allow all origins for development; adjust in production
+    allow_origins=[
+        "http://localhost:5173",
+        "https://fastapi-task-manager-three.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
