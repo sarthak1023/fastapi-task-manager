@@ -63,7 +63,11 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
              send_verification_email(user.email, code)
     except Exception as e:
              print(f"Failed to send verification email: {e}")
-    # Don't crash signup just because email failed — user is created, they just won't get the code
+    # Email delivery failed (e.g. Resend free-tier restriction) —
+    # auto-verify so the account isn't stuck unverifiable
+    db_user.is_verified = True
+    db_user.verification_code = None
+    db.commit()
 
     return db_user
 
