@@ -1,7 +1,10 @@
+import code
+
 from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 
+from backend.schemas import user
 from services.auth import (create_access_token, verify_password, hash_password)
 from services.email_services import generate_verification_code, send_verification_email
 from fastapi import APIRouter, Depends, status
@@ -56,10 +59,13 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
 
-    send_verification_email(user.email, code)
+    try:
+             send_verification_email(user.email, code)
+    except Exception as e:
+             print(f"Failed to send verification email: {e}")
+    # Don't crash signup just because email failed — user is created, they just won't get the code
 
     return db_user
-
 
 @router.post("/verify")
 def verify(request: VerifyRequest, db: Session = Depends(get_db)):
