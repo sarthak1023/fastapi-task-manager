@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 
-from backend.schemas import user
+from schemas.user import UserCreate, UserResponse
 from services.auth import (create_access_token, verify_password, hash_password)
 from services.email_services import generate_verification_code, send_verification_email
 from fastapi import APIRouter, Depends, status
