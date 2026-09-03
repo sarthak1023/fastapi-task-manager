@@ -1,11 +1,8 @@
-import code
-
 from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import datetime, timedelta
 
-from schemas.user import UserCreate, UserResponse
-from services.auth import (create_access_token, verify_password, hash_password)
+from services.auth import (create_access_token, verify_password, hash_password, get_current_user)
 from services.email_services import generate_verification_code, send_verification_email
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
@@ -13,8 +10,8 @@ from pydantic import BaseModel
 
 from database import get_db
 from models.user import User
-from schemas.user import UserCreate, UserResponse
 from models.task import Task as TaskModel
+from schemas.user import UserCreate, UserResponse
 
 router = APIRouter()
 
@@ -26,6 +23,10 @@ class VerifyRequest(BaseModel):
 
 class ResendCodeRequest(BaseModel):
     email: str
+
+
+class DeleteAccountRequest(BaseModel):
+    password: str
 
 
 @router.post(
@@ -60,16 +61,15 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     db.refresh(db_user)
 
     try:
-             send_verification_email(user.email, code)
+        send_verification_email(user.email, code)
     except Exception as e:
-             print(f"Failed to send verification email: {e}")
-    # Email delivery failed (e.g. Resend free-tier restriction) —
-    # auto-verify so the account isn't stuck unverifiable
-    db_user.is_verified = True
-    db_user.verification_code = None
-    db.commit()
+        print(f"Failed to send verification email: {e}")
+        db_user.is_verified = True
+        db_user.verification_code = None
+        db.commit()
 
     return db_user
+
 
 @router.post("/verify")
 def verify(request: VerifyRequest, db: Session = Depends(get_db)):
@@ -122,13 +122,27 @@ def delete_user(email: str, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Delete this user's tasks first, to avoid a foreign key conflict in Postgres
     db.query(TaskModel).filter(TaskModel.user_id == user.id).delete()
-
     db.delete(user)
     db.commit()
 
     return {"message": "User deleted"}
+
+
+@router.delete("/account")
+def delete_account(
+    request: DeleteAccountRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not verify_password(request.password, current_user.hashed_password):
+        raise HTTPException(status_code=401, detail="Incorrect password")
+
+    db.query(TaskModel).filter(TaskModel.user_id == current_user.id).delete()
+    db.delete(current_user)
+    db.commit()
+
+    return {"message": "Account deleted successfully"}
 
 
 @router.post("/login")
@@ -141,29 +155,15 @@ def login(
     ).first()
 
     if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid email or password"
-        )
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    if not verify_password(
-        form_data.password,
-        user.hashed_password
-    ):
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid email or password"
-        )
+    if not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     if not user.is_verified:
-        raise HTTPException(
-            status_code=403,
-            detail="Please verify your email before logging in"
-        )
+        raise HTTPException(status_code=403, detail="Please verify your email before logging in")
 
-    access_token = create_access_token(
-        data={"sub": user.email}
-    )
+    access_token = create_access_token(data={"sub": user.email})
 
     return {
         "access_token": access_token,
