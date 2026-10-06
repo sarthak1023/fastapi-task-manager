@@ -1,6 +1,6 @@
 import TaskItem from "./TaskItem";
 
-function TaskList({ tasks, deleteTask, toggleTask, editTask }) {
+function TaskList({ tasks, deleteTask, toggleTask, editTask, readOnly = false }) {
     if (tasks.length === 0) {
         return (
             <p className="text-center text-gray-400 text-sm py-8">
@@ -18,6 +18,7 @@ function TaskList({ tasks, deleteTask, toggleTask, editTask }) {
                     deleteTask={deleteTask}
                     toggleTask={toggleTask}
                     editTask={editTask}
+                    readOnly={readOnly}
                 />
             ))}
         </div>

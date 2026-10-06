@@ -1,14 +1,16 @@
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse
 from pathlib import Path
+import os
+from sqlalchemy import inspect, text
 
 from core.exception_handler import global_exception_handler
 
-from database import engine, Base
+from database import engine, Base, SessionLocal
 from models.task import Task
 from models.user import User   # important for creating user table in database
+from services.auth import hash_password
 
 from routers.tasks import router as task_router
 from routers.user import router as user_router   # for hashing password
@@ -19,12 +21,48 @@ BASE_DIR = Path(__file__).resolve().parent
 # Create all database tables
 Base.metadata.create_all(bind=engine)
 
+user_columns = {column["name"] for column in inspect(engine).get_columns("users")}
+if "name" not in user_columns:
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TABLE users ADD COLUMN name VARCHAR NOT NULL DEFAULT ''"))
+if "is_admin" not in user_columns:
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT 0"))
+
+task_columns = {column["name"] for column in inspect(engine).get_columns("tasks")}
+if "priority" not in task_columns:
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TABLE tasks ADD COLUMN priority VARCHAR NOT NULL DEFAULT 'medium'"))
+if "due_at" not in task_columns:
+    with engine.begin() as connection:
+        connection.execute(text("ALTER TABLE tasks ADD COLUMN due_at DATETIME"))
+
+admin_email = os.getenv("ADMIN_EMAIL")
+admin_password = os.getenv("ADMIN_PASSWORD")
+if admin_email and admin_password:
+    admin_db = SessionLocal()
+    try:
+        admin_user = admin_db.query(User).filter(User.email == admin_email).first()
+        if not admin_user:
+            admin_db.add(User(
+                name="Administrator",
+                email=admin_email,
+                hashed_password=hash_password(admin_password),
+                is_verified=True,
+                is_admin=True
+            ))
+            admin_db.commit()
+        elif not admin_user.is_admin:
+            admin_user.is_admin = True
+            admin_db.commit()
+    finally:
+        admin_db.close()
+
 from core.logging_config import logger
 
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
-templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 app.add_exception_handler(
     Exception, global_exception_handler
@@ -53,8 +91,5 @@ app.include_router(user_router)  # to connect user router to main.py
 
 
 @app.get("/")
-def home(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html"
-    )
+def home():
+    return FileResponse(BASE_DIR / "templates" / "index.html")

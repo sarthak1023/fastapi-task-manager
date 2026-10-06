@@ -21,7 +21,7 @@ ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 def hash_password(password: str):
     return pwd_context.hash(password)
@@ -62,6 +62,12 @@ def get_current_user(token:str = Depends(oauth2_scheme), db: Session = Depends(g
         raise credentials_exception
 
     return user
+
+
+def require_admin(current_user: User = Depends(get_current_user)):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Administrator access required")
+    return current_user
 
         
 

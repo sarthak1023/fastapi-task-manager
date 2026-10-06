@@ -2,13 +2,15 @@ import { useState } from "react";
 import Tilt from "react-parallax-tilt";
 import { Check, Pencil, Trash2, X, Save } from "lucide-react";
 
-function TaskItem({ task, deleteTask, toggleTask, editTask }) {
+function TaskItem({ task, deleteTask, toggleTask, editTask, readOnly = false }) {
     const [isEditing, setIsEditing] = useState(false);
     const [title, setTitle] = useState(task.title);
     const [description, setDescription] = useState(task.description || "");
+    const [priority, setPriority] = useState(task.priority || "medium");
+    const [dueAt, setDueAt] = useState(task.due_at ? task.due_at.slice(0, 16) : "");
 
     function handleSave() {
-        editTask(task.id, title, description);
+        editTask(task.id, title, description, priority, dueAt);
         setIsEditing(false);
     }
 
@@ -21,6 +23,10 @@ function TaskItem({ task, deleteTask, toggleTask, editTask }) {
                     onChange={(e) => setTitle(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+                <select value={priority} onChange={(e) => setPriority(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <option value="high">High priority</option><option value="medium">Medium priority</option><option value="low">Low priority</option>
+                </select>
+                <input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
                 <input
                     type="text"
                     value={description}
@@ -59,12 +65,14 @@ function TaskItem({ task, deleteTask, toggleTask, editTask }) {
                             {task.title}
                         </h3>
                     </div>
+                    <p className="text-xs text-gray-400 mt-1 pl-4">Task ID: {task.id} | User: {task.user_name || `User ${task.user_id}`}</p>
+                    <p className="text-xs text-gray-500 mt-1 pl-4">{task.priority || "medium"} priority{task.due_at ? ` | Due: ${new Date(task.due_at).toLocaleString()}` : ""}</p>
                     <p className="text-sm text-gray-500 mt-1 break-words pl-4">
                         {task.description}
                     </p>
                 </div>
 
-                <div className="flex gap-1.5 shrink-0">
+                {!readOnly && <div className="flex gap-1.5 shrink-0">
                     <button onClick={() => toggleTask(task.id)} title="Toggle complete" className="p-2 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition">
                         <Check size={16} />
                     </button>
@@ -74,7 +82,7 @@ function TaskItem({ task, deleteTask, toggleTask, editTask }) {
                     <button onClick={() => deleteTask(task.id)} title="Delete" className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition">
                         <Trash2 size={16} />
                     </button>
-                </div>
+                </div>}
             </div>
         </Tilt>
     );
