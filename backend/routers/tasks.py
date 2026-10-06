@@ -3,8 +3,9 @@ from fastapi import Depends , APIRouter , HTTPException, status
 from schemas.task import Task, CreateTaskresponse
 from sqlalchemy.orm import Session
 from database import get_db
-from services.auth import get_current_user # to protect endpoints with jwt authentication
 from models.user import User
+from datetime import datetime, timedelta, UTC
+from services.auth import get_current_user, require_admin # to protect endpoints with jwt authentication
 from typing import Optional
 
 router = APIRouter(
@@ -46,6 +47,7 @@ def get_student(student_id: int, db: Session =Depends(get_db)):
 @router.get("/tasks")
 def get_tasks(
     completed: Optional[bool] = None,   # from ?completed=true or ?completed=false, or nothing
+    priority: Optional[str] = None,
     skip: int = 0,                       # from ?skip=10, defaults to 0 if not given
     limit: int = 10,                     # from ?limit=5, defaults to 10 if not given
     db: Session = Depends(get_db),
@@ -59,16 +61,58 @@ def get_tasks(
     # If the frontend specifically asked to filter by completed status, narrow it further
     if completed is not None:
         query = query.filter(TaskModel.completed == completed)
+    if priority is not None:
+        query = query.filter(TaskModel.priority == priority)
 
     # Apply pagination: skip some, then take only up to `limit` results
     tasks = query.offset(skip).limit(limit).all()
 
     return tasks
 
-# Task 3  day 3
-@router.get("/{task_id}")
-def get_task(task_id: int, db: Session = Depends(get_db)):
+@router.get("/admin/all")
+def get_all_tasks(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    tasks = db.query(TaskModel, User.name).join(User, TaskModel.user_id == User.id).all()
+    return [
+        {
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "completed": task.completed,
+            "priority": task.priority,
+            "due_at": task.due_at,
+            "created_at": task.created_at,
+            "user_id": task.user_id,
+            "user_name": user_name or "Unnamed user"
+        }
+        for task, user_name in tasks
+    ]
+
+
+@router.get("/reminders")
+def get_task_reminders(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    now = datetime.now(UTC).replace(tzinfo=None)
+    return db.query(TaskModel).filter(
+        TaskModel.user_id == current_user.id,
+        TaskModel.completed.is_(False),
+        TaskModel.priority.in_(["high", "medium"]),
+        TaskModel.due_at >= now,
+        TaskModel.due_at <= now + timedelta(hours=1)
+    ).order_by(TaskModel.due_at.asc()).all()
+
+
+@router.delete("/admin/{task_id}")
+def delete_any_task(task_id: int, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
     task = db.query(TaskModel).filter(TaskModel.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    db.delete(task)
+    db.commit()
+    return {"message": "Task deleted successfully"}
+
+
+@router.get("/{task_id}")
+def get_task(task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    task = db.query(TaskModel).filter(TaskModel.id == task_id, TaskModel.user_id == current_user.id).first()
     if task:
         return task
 
@@ -82,6 +126,8 @@ def create_task(task: Task, db: Session = Depends(get_db),
     title=task.title,
     description=task.description,
     completed=task.completed,
+    priority=task.priority,
+    due_at=task.due_at,
     user_id=current_user.id 
 )
 
@@ -100,6 +146,8 @@ def update_task(task_id: int, updated_task: Task, db: Session = Depends(get_db),
         task.title = updated_task.title
         task.description = updated_task.description
         task.completed = updated_task.completed
+        task.priority = updated_task.priority
+        task.due_at = updated_task.due_at
         db.commit()
         db.refresh(task)
         return {

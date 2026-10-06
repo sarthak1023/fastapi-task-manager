@@ -8,6 +8,7 @@ import { CheckSquare } from "lucide-react";
 function Signup() {
     const navigate = useNavigate();
 
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -18,7 +19,7 @@ function Signup() {
         e.preventDefault();
         setError("");
 
-        if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
+        if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
             setError("Please fill in all fields.");
             return;
         }
@@ -36,9 +37,9 @@ function Signup() {
         setIsSubmitting(true);
 
         try {
-            const response = await api.post("/signup", { email, password });
+            const response = await api.post("/signup", { name, email, password });
             console.log("Signup successful:", response.data);
-            navigate("/verify", { state: { email: email } });
+            navigate("/login", { state: { message: "Account created successfully. You can now log in." } });
 
         } catch (error) {
             console.error("Signup failed:", error);
@@ -91,6 +92,12 @@ function Signup() {
                                 {error}
                             </p>
                         )}
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your name"
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                        </div>
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>

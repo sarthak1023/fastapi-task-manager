@@ -1,9 +1,6 @@
 from fastapi import HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from datetime import datetime, timedelta
-
-from services.auth import (create_access_token, verify_password, hash_password, get_current_user)
-from services.email_services import generate_verification_code, send_verification_email
+from services.auth import (create_access_token, verify_password, hash_password, get_current_user, require_admin)
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -11,22 +8,22 @@ from pydantic import BaseModel
 from database import get_db
 from models.user import User
 from models.task import Task as TaskModel
-from schemas.user import UserCreate, UserResponse
+from schemas.user import UserCreate, UserResponse, AdminUserResponse
 
 router = APIRouter()
 
 
-class VerifyRequest(BaseModel):
-    email: str
-    code: str
-
-
-class ResendCodeRequest(BaseModel):
-    email: str
-
-
 class DeleteAccountRequest(BaseModel):
     password: str
+
+
+@router.get("/me")
+def get_profile(current_user: User = Depends(get_current_user)):
+    return {
+        "name": current_user.name or "there",
+        "email": current_user.email,
+        "is_admin": current_user.is_admin
+    }
 
 
 @router.post(
@@ -46,81 +43,33 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
 
     hashed_password = hash_password(user.password)
 
-    code = generate_verification_code()
-    expiry = datetime.utcnow() + timedelta(minutes=10)
-
     db_user = User(
+        name=user.name,
         email=user.email,
         hashed_password=hashed_password,
-        is_verified=False,
-        verification_code=code,
-        verification_code_expires=expiry
+        is_verified=True
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
 
-    try:
-        send_verification_email(user.email, code)
-    except Exception as e:
-        print(f"Failed to send verification email: {e}")
-        db_user.is_verified = True
-        db_user.verification_code = None
-        db.commit()
-
     return db_user
 
 
-@router.post("/verify")
-def verify(request: VerifyRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == request.email).first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if user.is_verified:
-        return {"message": "Already verified"}
-
-    if user.verification_code_expires and datetime.utcnow() > user.verification_code_expires:
-        raise HTTPException(status_code=400, detail="Verification code has expired. Please request a new one.")
-
-    if user.verification_code != request.code:
-        raise HTTPException(status_code=400, detail="Invalid verification code")
-
-    user.is_verified = True
-    user.verification_code = None
-    user.verification_code_expires = None
-    db.commit()
-
-    return {"message": "Email verified successfully"}
-
-
-@router.post("/resend-code")
-def resend_code(request: ResendCodeRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == request.email).first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    if user.is_verified:
-        return {"message": "Already verified"}
-
-    code = generate_verification_code()
-    user.verification_code = code
-    user.verification_code_expires = datetime.utcnow() + timedelta(minutes=10)
-    db.commit()
-
-    send_verification_email(user.email, code)
-
-    return {"message": "Verification code resent"}
+@router.get("/users", response_model=list[AdminUserResponse])
+def list_users(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    return db.query(User).all()
 
 
 @router.delete("/users/{email}")
-def delete_user(email: str, db: Session = Depends(get_db)):
+def delete_user(email: str, db: Session = Depends(get_db), admin: User = Depends(require_admin)):
     user = db.query(User).filter(User.email == email).first()
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    if user.id == admin.id:
+        raise HTTPException(status_code=400, detail="Administrators cannot delete their own account here")
 
     db.query(TaskModel).filter(TaskModel.user_id == user.id).delete()
     db.delete(user)

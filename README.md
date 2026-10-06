@@ -66,11 +66,9 @@ Edit `backend/.env` with your own values:
 SECRET_KEY=your_secret_key_here
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
-GMAIL_ADDRESS=your-gmail-address
-GMAIL_APP_PASSWORD=your-gmail-app-password
 ```
 
-`GMAIL_ADDRESS` and `GMAIL_APP_PASSWORD` are required when signup sends a verification email. Use a Gmail app password, not your normal Gmail password.
+Signup no longer requires an email provider or verification service. New accounts are verified immediately.
 
 Start the backend from the `backend` directory:
 

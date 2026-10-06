@@ -10,6 +10,8 @@ class Task(Base):
     title = Column(String, nullable=False)
     description = Column(String, nullable=True)
     completed = Column(Boolean, default=False)
+    priority = Column(String, nullable=False, default="medium")
+    due_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.now(UTC))
 
     user_id = Column(Integer, ForeignKey("users.id"))  # TO link the task to the logged-in user, so they can only view their own tasks, not all tasks created by other users
