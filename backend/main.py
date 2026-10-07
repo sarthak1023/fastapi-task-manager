@@ -72,7 +72,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://fastapi-task-manager-three.vercel.app"
+        "https://fastapi-task-manager-khaki.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
