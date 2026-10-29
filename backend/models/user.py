@@ -13,3 +13,4 @@ class User(Base):
     verification_code = Column(String, nullable=True)
     verification_code_expires = Column(DateTime, nullable=True)
     reset_code = Column(String, nullable=True)
+    reset_code_expires = Column(DateTime, nullable=True)

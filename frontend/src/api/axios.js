@@ -15,13 +15,18 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// NEW: runs on every response — if the backend says 401, the token is invalid/expired
+// Runs on every response — if the backend says 401, the token is invalid/expired
 api.interceptors.response.use(
     (response) => response, // if the response is fine, just pass it through unchanged
     (error) => {
-        if (error.response && error.response.status === 401) {
+        // A 401 from these endpoints means "wrong password", not "session expired",
+        // so let the page show its own error message instead of redirecting
+        const passwordCheckUrls = ["/login", "/account"];
+        const isPasswordCheck = passwordCheckUrls.includes(error.config?.url);
+
+        if (error.response && error.response.status === 401 && !isPasswordCheck) {
             localStorage.removeItem("access_token");
-            window.location.href = "/login"; // hard redirect — see explanation below
+            window.location.href = "/login"; // full reload so all in-memory state is cleared too
         }
 
         return Promise.reject(error); // still let the original .catch() in the component run too

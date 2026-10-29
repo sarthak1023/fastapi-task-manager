@@ -1,95 +1,101 @@
-from fastapi.staticfiles import StaticFiles
-from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse
-from pathlib import Path
+import asyncio
 import os
-from sqlalchemy import inspect, text
+from contextlib import asynccontextmanager
 
-from core.exception_handler import global_exception_handler
-
-from database import engine, Base, SessionLocal
-from models.task import Task
-from models.user import User   # important for creating user table in database
-from services.auth import hash_password
-
-from routers.tasks import router as task_router
-from routers.user import router as user_router   # for hashing password
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-BASE_DIR = Path(__file__).resolve().parent
+from core.exception_handler import global_exception_handler
+from core.logging_config import logger
+from core.migrations import run_migrations
+from database import engine, Base, SessionLocal
+from models.task import Task  # noqa: F401  (imported so create_all() knows about the table)
+from models.user import User
+from routers.admin import router as admin_router
+from routers.dashboard import router as dashboard_router
+from routers.tasks import router as task_router
+from routers.user import router as user_router
+from services.auth import hash_password
+from services.reminders import reminder_loop
 
-# Create all database tables
+# Create missing tables, then add any columns introduced after the first release
 Base.metadata.create_all(bind=engine)
+run_migrations(engine)
 
-user_columns = {column["name"] for column in inspect(engine).get_columns("users")}
-if "name" not in user_columns:
-    with engine.begin() as connection:
-        connection.execute(text("ALTER TABLE users ADD COLUMN name VARCHAR NOT NULL DEFAULT ''"))
-if "is_admin" not in user_columns:
-    with engine.begin() as connection:
-        connection.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT 0"))
 
-task_columns = {column["name"] for column in inspect(engine).get_columns("tasks")}
-if "priority" not in task_columns:
-    with engine.begin() as connection:
-        connection.execute(text("ALTER TABLE tasks ADD COLUMN priority VARCHAR NOT NULL DEFAULT 'medium'"))
-if "due_at" not in task_columns:
-    with engine.begin() as connection:
-        connection.execute(text("ALTER TABLE tasks ADD COLUMN due_at DATETIME"))
+def seed_admin():
+    # Create (or promote) the administrator account from ADMIN_EMAIL / ADMIN_PASSWORD
+    admin_email = os.getenv("ADMIN_EMAIL")
+    admin_password = os.getenv("ADMIN_PASSWORD")
+    if not admin_email or not admin_password:
+        return
 
-admin_email = os.getenv("ADMIN_EMAIL")
-admin_password = os.getenv("ADMIN_PASSWORD")
-if admin_email and admin_password:
-    admin_db = SessionLocal()
+    db = SessionLocal()
     try:
-        admin_user = admin_db.query(User).filter(User.email == admin_email).first()
+        admin_user = db.query(User).filter(User.email == admin_email).first()
         if not admin_user:
-            admin_db.add(User(
+            db.add(User(
                 name="Administrator",
                 email=admin_email,
                 hashed_password=hash_password(admin_password),
                 is_verified=True,
                 is_admin=True
             ))
-            admin_db.commit()
+            db.commit()
         elif not admin_user.is_admin:
             admin_user.is_admin = True
-            admin_db.commit()
+            db.commit()
     finally:
-        admin_db.close()
+        db.close()
 
-from core.logging_config import logger
 
-app = FastAPI()
+seed_admin()
 
-app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
-app.add_exception_handler(
-    Exception, global_exception_handler
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start the reminder-email checker when the server starts, stop it on shutdown
+    reminder_task = asyncio.create_task(reminder_loop())
+    yield
+    reminder_task.cancel()
+
+
+app = FastAPI(
+    title="TaskMaster API",
+    description="Task management API with JWT auth, email verification, password reset and due-date reminders.",
+    lifespan=lifespan
 )
 
+app.add_exception_handler(Exception, global_exception_handler)
+
+# Comma-separated list in .env, e.g. CORS_ORIGINS=http://localhost:5173,https://my-app.vercel.app
+cors_origins = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:5173,https://fastapi-task-manager-khaki.vercel.app"
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://fastapi-task-manager-khaki.vercel.app"
-    ],
+    allow_origins=[origin.strip() for origin in cors_origins.split(",") if origin.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
 @app.middleware("http")
 async def log_requests(request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url.path}")
-    response = await call_next(request)  # very important to call the next middleware or endpoint handler in the chain, otherwise the request will not be processed further and will result in a timeout or error.
+    response = await call_next(request)
     logger.info(f"Response status: {response.status_code}")
     return response
 
-app.include_router(task_router)  # to connect task router to main.py
-app.include_router(user_router)  # to connect user router to main.py
+
+app.include_router(task_router)
+app.include_router(user_router)
+app.include_router(admin_router)
+app.include_router(dashboard_router)
 
 
-@app.get("/")
+@app.get("/", tags=["Health"], summary="Health check")
 def home():
-    return FileResponse(BASE_DIR / "templates" / "index.html")
+    return {"status": "ok", "docs": "/docs"}

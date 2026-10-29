@@ -1,4 +1,3 @@
-import token 
 from pathlib import Path
 
 from fastapi import Depends, HTTPException, status
@@ -17,11 +16,30 @@ import os
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY is not set. Copy backend/.env.example to backend/.env and fill it in.")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
+
+# Same rules as the checklist in frontend/src/utils/password.js
+PASSWORD_RULES = [
+    (lambda p: len(p) >= 8, "at least 8 characters"),
+    (lambda p: any(c.isupper() for c in p), "an uppercase letter"),
+    (lambda p: any(c.islower() for c in p), "a lowercase letter"),
+    (lambda p: any(c.isdigit() for c in p), "a number"),
+    (lambda p: any(not c.isalnum() and not c.isspace() for c in p), "a special character"),
+]
+
+
+def check_password_strength(password: str):
+    # Raise a 400 listing every rule the password breaks, e.g. "Password must contain a number, a special character"
+    missing = [description for rule, description in PASSWORD_RULES if not rule(password)]
+    if missing:
+        raise HTTPException(status_code=400, detail="Password must contain " + ", ".join(missing))
+
 
 def hash_password(password: str):
     return pwd_context.hash(password)

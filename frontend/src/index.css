@@ -1,42 +1,19 @@
 @import "tailwindcss";
 
-@keyframes welcome-enter {
-	from { opacity: 0; transform: translateY(10px); }
-	to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes welcome-orbit {
-	from { transform: rotate(0deg) translateX(18px) rotate(0deg); }
-	to { transform: rotate(360deg) translateX(18px) rotate(-360deg); }
-}
-
-.welcome-banner {
-	position: relative;
-	background: linear-gradient(120deg, #0f766e, #0891b2 55%, #2563eb);
-	animation: welcome-enter 600ms ease-out both;
-}
-
-.welcome-orbit {
-	position: absolute;
-	right: 9%;
-	top: 50%;
-	width: 72px;
-	height: 72px;
-	border: 1px solid rgba(255, 255, 255, 0.4);
-	border-radius: 999px;
-	animation: welcome-orbit 8s linear infinite;
-}
-
-.welcome-orbit::after {
-	content: "";
-	position: absolute;
-	top: 50%;
-	left: -4px;
-	width: 8px;
-	height: 8px;
-	border-radius: 999px;
-	background: #a5f3fc;
-	box-shadow: 0 0 18px #a5f3fc;
+/* TaskMaster brand colour. Every bg-brand-*, text-brand-*, ring-brand-* ... class uses this scale,
+   so the whole app's accent colour can be changed here in one place. */
+@theme {
+	--color-brand-50: #eff6ff;
+	--color-brand-100: #dbeafe;
+	--color-brand-200: #bfdbfe;
+	--color-brand-300: #93c5fd;
+	--color-brand-400: #60a5fa;
+	--color-brand-500: #3b82f6;
+	--color-brand-600: #2563eb;
+	--color-brand-700: #1d4ed8;
+	--color-brand-800: #1e40af;
+	--color-brand-900: #1e3a8a;
+	--color-brand-950: #172554;
 }
 
 @keyframes rain-fall {
@@ -96,11 +73,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.welcome-banner,
-	.welcome-orbit {
-		animation: none;
-	}
-
 	.auth-panel > div {
 		animation: none;
 		transition: none;

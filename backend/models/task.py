@@ -12,7 +12,10 @@ class Task(Base):
     completed = Column(Boolean, default=False)
     priority = Column(String, nullable=False, default="medium")
     due_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.now(UTC))
+    reminder_sent = Column(Boolean, default=False, nullable=False)  # so each task gets only one reminder email
+    completed_at = Column(DateTime, nullable=True)  # when it was marked complete; powers the dashboard activity chart
+    # lambda so the time is taken when each task is created, not once when the server starts
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None))
 
-    user_id = Column(Integer, ForeignKey("users.id"))  # TO link the task to the logged-in user, so they can only view their own tasks, not all tasks created by other users
+    user_id = Column(Integer, ForeignKey("users.id"))  # owner; users can only see and change their own tasks
 
