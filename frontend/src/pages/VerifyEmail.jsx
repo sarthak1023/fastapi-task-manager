@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import api from "../api/axios";
+import * as userApi from "../api/user";
 import AuthCard from "../components/AuthCard";
 
 // Same compact style as the Login / Signup inputs
@@ -33,7 +33,7 @@ function VerifyEmail() {
 
         setIsSubmitting(true);
         try {
-            await api.post("/verify-email", { email, code });
+            await userApi.verifyEmail({ email, code });
             navigate("/login", { state: { message: "Email verified. You can now log in." } });
         } catch (error) {
             setError(error.response?.data?.detail || "Verification failed. Please try again.");
@@ -53,7 +53,7 @@ function VerifyEmail() {
 
         setIsResending(true);
         try {
-            const response = await api.post("/resend-verification", { email });
+            const response = await userApi.resendVerification(email);
             setMessage(response.data.message);
         } catch (error) {
             setError(error.response?.data?.detail || "Could not resend the code.");

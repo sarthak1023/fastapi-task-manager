@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import api from "../api/axios";
+import * as userApi from "../api/user";
 import AuthCard from "../components/AuthCard";
 import PasswordRequirements from "../components/PasswordRequirements";
 import { isStrongPassword } from "../utils/password";
@@ -40,7 +40,7 @@ function ForgotPassword() {
 
         setIsSubmitting(true);
         try {
-            const response = await api.post("/forgot-password", { email });
+            const response = await userApi.forgotPassword(email);
             setMessage(response.data.message);
             setStep("reset");
         } catch (error) {
@@ -70,7 +70,7 @@ function ForgotPassword() {
 
         setIsSubmitting(true);
         try {
-            await api.post("/reset-password", { email, code, new_password: newPassword });
+            await userApi.resetPassword({ email, code, newPassword });
             navigate("/login", { state: { message: "Password reset. You can now log in with your new password." } });
         } catch (error) {
             setError(error.response?.data?.detail || "Could not reset your password.");

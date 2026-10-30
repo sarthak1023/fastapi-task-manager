@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { CalendarPlus, CircleCheck, Clock, ListChecks, Search, Trash2, TriangleAlert, Users } from "lucide-react";
 import { useAuth } from "../context/useAuth";
-import api from "../api/axios";
+import * as adminApi from "../api/admin";
+import * as userApi from "../api/user";
 import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
 import StatCard from "../components/ui/StatCard";
@@ -25,7 +26,7 @@ function AdminDashboard() {
     useEffect(() => {
         if (!user.is_admin) return undefined;
         let active = true;
-        api.get("/admin/stats")
+        adminApi.getAdminStats()
             .then((response) => {
                 if (!active) return;
                 setStats(response.data);
@@ -46,7 +47,7 @@ function AdminDashboard() {
         setDeleteBusy(true);
         setDeleteError("");
         try {
-            await api.delete(`/users/${encodeURIComponent(deleting.email)}`);
+            await userApi.deleteUser(deleting.email);
             setDeleting(null);
             setReloadKey((key) => key + 1);   // refresh the counts and the table
         } catch (err) {

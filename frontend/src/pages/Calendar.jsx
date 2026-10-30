@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import api from "../api/axios";
+import * as tasksApi from "../api/tasks";
 import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
 import { alertStyles, buttonStyles, inputStyles, labelStyles, selectStyles } from "../components/ui/styles";
@@ -49,7 +49,7 @@ function Calendar() {
         let active = true;
         const start = days[0];
         const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 42);
-        api.get("/tasks/calendar", { params: { start: start.toISOString(), end: end.toISOString() } })
+        tasksApi.getCalendarTasks(start, end)
             .then((response) => {
                 if (!active) return;
                 setTasks(response.data);
@@ -107,7 +107,7 @@ function Calendar() {
 
         setIsAdding(true);
         try {
-            await api.post("/tasks/", { title: title.trim(), priority, due_at: due.toISOString(), completed: false });
+            await tasksApi.createTask({ title: title.trim(), priority, due_at: due.toISOString(), completed: false });
             setTitle("");
             setReloadKey((key) => key + 1);
         } catch (err) {

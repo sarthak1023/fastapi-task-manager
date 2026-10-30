@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import api from "../api/axios";
+import * as userApi from "../api/user";
 import Card from "./ui/Card";
 import PasswordRequirements from "./PasswordRequirements";
 import { alertStyles, buttonStyles, inputStyles, labelStyles } from "./ui/styles";
@@ -36,7 +36,7 @@ function ChangePasswordCard() {
 
         setIsSaving(true);
         try {
-            await api.post("/me/change-password", { current_password: currentPassword, new_password: newPassword });
+            await userApi.changePassword({ currentPassword, newPassword });
             setCurrentPassword("");
             setNewPassword("");
             setConfirmPassword("");

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, ClipboardList, Plus, Search, X } from "lucide-react";
 import { useAuth } from "../context/useAuth";
-import api from "../api/axios";
+import * as tasksApi from "../api/tasks";
 import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
@@ -62,7 +62,7 @@ function Tasks() {
             limit: PAGE_SIZE + 1,   // one extra row tells us whether there is a next page
         };
 
-        api.get(isAdmin ? "/tasks/admin/all" : "/tasks/tasks", { params })
+        (isAdmin ? tasksApi.getAllTasks(params) : tasksApi.getTasks(params))
             .then((response) => {
                 if (!active) return;
                 setTasks(response.data.slice(0, PAGE_SIZE));
@@ -110,7 +110,7 @@ function Tasks() {
     async function toggleTask(task) {
         setBusyId(task.id);
         try {
-            await api.put(`/tasks/${task.id}`, {
+            await tasksApi.updateTask(task.id, {
                 title: task.title,
                 description: task.description,
                 priority: task.priority,
@@ -129,7 +129,7 @@ function Tasks() {
     async function confirmDelete() {
         setDeleteBusy(true);
         try {
-            await api.delete(`/tasks/${deleting.id}`);
+            await tasksApi.deleteTask(deleting.id);
             setDeleting(null);
             reload();
         } catch (err) {

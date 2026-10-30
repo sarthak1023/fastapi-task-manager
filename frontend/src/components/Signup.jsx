@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
-import api from "../api/axios";
+import * as userApi from "../api/user";
 import AuthCard from "./AuthCard";
 import PasswordRequirements from "./PasswordRequirements";
 import { isStrongPassword } from "../utils/password";
@@ -45,7 +45,7 @@ function Signup() {
 
         setIsSubmitting(true);
         try {
-            await api.post("/signup", { name: name.trim(), email, password });
+            await userApi.signup({ name: name.trim(), email, password });
             navigate("/verify-email", { state: { email, message: `Account created. We sent a 6-digit code to ${email}.` } });
         } catch (error) {
             console.error("Signup failed:", error);

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Shield, Trash2, UserRound } from "lucide-react";
 import { useAuth } from "../context/useAuth";
-import api from "../api/axios";
+import * as userApi from "../api/user";
 import Card from "../components/ui/Card";
 import Modal from "../components/ui/Modal";
 import PageHeader from "../components/ui/PageHeader";
@@ -50,7 +50,7 @@ function Profile() {
     async function deleteAccount() {
         setIsDeleting(true);
         try {
-            await api.delete("/account", { data: { password: deletePassword } });
+            await userApi.deleteAccount(deletePassword);
             logout();
             navigate("/login", { state: { message: "Your account and all of your tasks have been permanently deleted." } });
         } catch (err) {

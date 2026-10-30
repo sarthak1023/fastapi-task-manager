@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import api from "../api/axios";
+import * as userApi from "../api/user";
 import { AuthContext } from "./useAuth";
 
 // Wraps the app and provides token + user + login/logout to everything inside it
@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
     // Whenever we get a token (login or page refresh), load the profile once
     useEffect(() => {
         if (!token) return;
-        api.get("/me")
+        userApi.getProfile()
             .then((response) => setUser(response.data))
             .catch((error) => console.error("Error fetching profile:", error));
     }, [token]);

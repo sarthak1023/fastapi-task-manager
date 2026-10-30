@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/useAuth";
-import api from "../api/axios";
+import * as userApi from "../api/user";
 import Card from "./ui/Card";
 import { alertStyles, buttonStyles, inputStyles, labelStyles } from "./ui/styles";
 
@@ -25,7 +25,7 @@ function EditProfileCard() {
 
         setIsSaving(true);
         try {
-            const response = await api.put("/me", { name: name.trim() });
+            const response = await userApi.updateProfile(name.trim());
             setUser(response.data);          // the top bar, dashboard greeting, etc. update immediately
             setName(response.data.name);
             setMessage("Profile updated.");

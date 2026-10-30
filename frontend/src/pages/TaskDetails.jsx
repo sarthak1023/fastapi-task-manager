@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Check, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { useAuth } from "../context/useAuth";
-import api from "../api/axios";
+import * as tasksApi from "../api/tasks";
 import Card from "../components/ui/Card";
 import PageHeader from "../components/ui/PageHeader";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
@@ -25,7 +25,7 @@ function TaskDetails() {
     const [now] = useState(() => Date.now());
 
     useEffect(() => {
-        api.get(`/tasks/${id}`)
+        tasksApi.getTask(id)
             .then((response) => {
                 setTask(response.data);
                 setStatus("ready");
@@ -56,7 +56,7 @@ function TaskDetails() {
         setBusy(true);
         setError("");
         try {
-            const response = await api.put(`/tasks/${task.id}`, {
+            const response = await tasksApi.updateTask(task.id, {
                 title: task.title,
                 description: task.description,
                 priority: task.priority,
@@ -76,7 +76,7 @@ function TaskDetails() {
         setBusy(true);
         try {
             // Owners use the normal endpoint; an admin removing someone else's task uses the admin one
-            await api.delete(isOwner ? `/tasks/${task.id}` : `/tasks/admin/${task.id}`);
+            await (isOwner ? tasksApi.deleteTask(task.id) : tasksApi.deleteAnyTask(task.id));
             navigate("/tasks");
         } catch (err) {
             console.error("Error deleting task:", err);

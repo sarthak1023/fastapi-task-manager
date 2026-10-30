@@ -1,5 +1,5 @@
 import { useState } from "react";
-import api from "../api/axios";
+import * as tasksApi from "../api/tasks";
 import Modal from "./ui/Modal";
 import { alertStyles, buttonStyles, inputStyles, labelStyles } from "./ui/styles";
 import { toLocalInputValue } from "../utils/dates";
@@ -41,7 +41,7 @@ function TaskFormModal({ task, defaultDueAt = "", onClose, onSaved }) {
 
         setSaving(true);
         try {
-            const response = isEdit ? await api.put(`/tasks/${task.id}`, body) : await api.post("/tasks/", body);
+            const response = isEdit ? await tasksApi.updateTask(task.id, body) : await tasksApi.createTask(body);
             onSaved(response.data.task);
         } catch (err) {
             console.error("Error saving task:", err);

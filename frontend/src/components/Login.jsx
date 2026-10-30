@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { useAuth } from "../context/useAuth";
-import api from "../api/axios";
+import * as userApi from "../api/user";
 import AuthCard from "./AuthCard";
 
 const inputClass = "w-full border border-slate-300 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-900 bg-white placeholder:text-slate-400 " +
@@ -38,14 +38,7 @@ function Login() {
         setIsSubmitting(true);
 
         try {
-            // The backend uses OAuth2's form format, which names the email field "username"
-            const formData = new URLSearchParams();
-            formData.append("username", email);
-            formData.append("password", password);
-
-            const response = await api.post("/login", formData, {
-                headers: { "Content-Type": "application/x-www-form-urlencoded" }
-            });
+            const response = await userApi.login({ email, password });
 
             login(response.data.access_token);
             navigate("/dashboard");

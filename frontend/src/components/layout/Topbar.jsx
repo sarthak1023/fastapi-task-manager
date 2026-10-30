@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, matchPath, useLocation, useNavigate } from "react-router-dom";
 import { Bell, LogOut, Menu, Search, UserRound } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
-import api from "../../api/axios";
+import * as tasksApi from "../../api/tasks";
 import { formatDue } from "../../utils/dates";
 import { getInitials } from "../../utils/user";
 
@@ -105,7 +105,7 @@ function NotificationsMenu() {
         let mounted = true;
         async function loadReminders() {
             try {
-                const response = await api.get("/tasks/reminders");
+                const response = await tasksApi.getTaskReminders();
                 if (mounted) setReminders(response.data);
             } catch (error) {
                 console.error("Error fetching reminders:", error);

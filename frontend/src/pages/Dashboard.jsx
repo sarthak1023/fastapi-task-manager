@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Activity, ArrowRight, CalendarClock, Check, CircleCheck, CircleDashed, Clock, Inbox, ListPlus, Plus, Target, TriangleAlert } from "lucide-react";
 import { useAuth } from "../context/useAuth";
-import api from "../api/axios";
+import * as dashboardApi from "../api/dashboard";
 import Card from "../components/ui/Card";
 import StatCard from "../components/ui/StatCard";
 import LineChart from "../components/charts/LineChart";
@@ -40,7 +40,7 @@ function Dashboard() {
         // Send the browser's timezone so "today" and month boundaries match the user's clock
         const params = { year, tz: Intl.DateTimeFormat().resolvedOptions().timeZone };
 
-        api.get("/dashboard", { params })
+        dashboardApi.getDashboard(params)
             .then((response) => {
                 if (!active) return;
                 setData(response.data);

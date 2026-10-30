@@ -45,7 +45,8 @@ A full-stack task manager built with **FastAPI** and **React**. Users sign up, v
 │   └── .env.example
 └── frontend/
     └── src/
-        ├── api/         # Axios instance (adds the token, handles expired sessions)
+        ├── api/         # axios.js (adds the token, handles expired sessions) + one file per backend router:
+        │                #   user.js, tasks.js, dashboard.js, admin.js (each function named after its backend function)
         ├── components/  # Login, Signup, Layout, TaskTable, TaskFormModal, ...
         │   ├── layout/  # Sidebar, Topbar
         │   ├── ui/      # Card, PageHeader, StatCard, Modal, ConfirmDialog, shared styles
